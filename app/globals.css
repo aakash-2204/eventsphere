@@ -1,8 +1,10 @@
 @import "tailwindcss";
 
+/* EventSphere uses one dark theme everywhere (no light mode in Phase 1). */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #070b1f;
+  --foreground: #e2e8f0;
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -10,17 +12,24 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Custom navy palette, used as bg-navy-950, bg-navy-900/70, etc. */
+  --color-navy-950: #070b1f;
+  --color-navy-900: #0d1330;
+  --color-navy-800: #151c42;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
