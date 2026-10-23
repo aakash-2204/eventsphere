@@ -2,12 +2,17 @@
 
 // Client component because the mobile menu needs to open and close.
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Menu, Ticket, X } from "lucide-react";
-import { ComingSoonButton } from "@/components/ui/coming-soon-button";
 import { Container } from "@/components/ui/container";
 
-export function SiteHeader() {
+type SiteHeaderProps = {
+  /** Log In / Sign Up or Dashboard links, rendered on the server by the page. */
+  desktopAuthLinks: ReactNode;
+  mobileAuthLinks: ReactNode;
+};
+
+export function SiteHeader({ desktopAuthLinks, mobileAuthLinks }: SiteHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
@@ -30,8 +35,7 @@ export function SiteHeader() {
             >
               Explore Events
             </a>
-            <ComingSoonButton label="Log In" />
-            <ComingSoonButton label="Sign Up" variant="primary" />
+            {desktopAuthLinks}
           </div>
 
           <button
@@ -56,8 +60,7 @@ export function SiteHeader() {
             >
               Explore Events
             </a>
-            <ComingSoonButton label="Log In" className="justify-between rounded-lg" />
-            <ComingSoonButton label="Sign Up" variant="primary" className="justify-between rounded-lg" />
+            {mobileAuthLinks}
           </div>
         ) : null}
       </Container>
