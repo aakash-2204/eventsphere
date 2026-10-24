@@ -10,7 +10,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/database";
 import { getSupabaseEnv, isSupabaseConfigured } from "./env";
 
-const PROTECTED_PREFIXES = ["/dashboard", "/admin"];
+const PROTECTED_PREFIXES = ["/dashboard", "/admin", "/organizer", "/bookings", "/tickets", "/checkout", "/notifications"];
 const GUEST_ONLY_PATHS = ["/login", "/signup", "/forgot-password"];
 
 export async function updateSession(request: NextRequest) {

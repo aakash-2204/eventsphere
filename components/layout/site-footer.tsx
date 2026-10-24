@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Mail, Ticket } from "lucide-react";
 import { Container } from "@/components/ui/container";
 
@@ -19,9 +20,9 @@ export function SiteFooter() {
 
         <nav aria-label="Footer" className="flex flex-col gap-2 text-sm">
           <p className="font-semibold text-white">On this page</p>
-          <a href="#featured-events" className="text-slate-400 hover:text-white">
+          <Link href="/events" className="text-slate-400 hover:text-white">
             Explore Events
-          </a>
+          </Link>
           <a href="#how-it-works" className="text-slate-400 hover:text-white">
             How it works
           </a>

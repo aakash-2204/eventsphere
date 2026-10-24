@@ -31,6 +31,45 @@ export async function updateProfileAction(_prev: FormState, formData: FormData):
   return { status: "success", message: "Your name has been updated." };
 }
 
+const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Enter your current password."),
+    password: z
+      .string()
+      .min(8, "Use at least 8 characters.")
+      .max(72, "Use 72 characters or fewer.")
+      .regex(/[A-Za-z]/, "Include at least one letter.")
+      .regex(/[0-9]/, "Include at least one number."),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, { message: "Passwords do not match.", path: ["confirmPassword"] });
+
+/** Logged-in password change. The current password is verified first. */
+export async function changePasswordAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const user = await requireUser();
+  const parsed = changePasswordSchema.safeParse({
+    currentPassword: getText(formData, "currentPassword"),
+    password: getText(formData, "password"),
+    confirmPassword: getText(formData, "confirmPassword"),
+  });
+  if (!parsed.success) {
+    return { status: "error", message: "Please fix the highlighted fields.", fieldErrors: z.flattenError(parsed.error).fieldErrors };
+  }
+
+  const supabase = await createClient();
+  const { error: verifyError } = await supabase.auth.signInWithPassword({ email: user.email, password: parsed.data.currentPassword });
+  if (verifyError) return { status: "error", fieldErrors: { currentPassword: ["Your current password is incorrect."] } };
+
+  const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
+  if (error) {
+    return {
+      status: "error",
+      message: error.code === "same_password" ? "Choose a password different from your current one." : "We could not change your password.",
+    };
+  }
+  return { status: "success", message: "Your password has been changed." };
+}
+
 export async function requestOrganizerAccessAction(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireRole(["attendee"]);
   const values = {

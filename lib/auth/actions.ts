@@ -9,7 +9,6 @@ import { redirect } from "next/navigation";
 import { type FormState, getText, safeRedirectPath } from "@/lib/forms";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
-import { logAuthFailure } from "./diagnostics";
 import {
   forgotPasswordSchema,
   resetPasswordSchema,
@@ -60,15 +59,11 @@ export async function signUpAction(_prev: FormState, formData: FormData): Promis
         emailRedirectTo: `${await getSiteUrl()}/auth/confirm?next=/dashboard`,
       },
     }));
-  } catch (thrown) {
-    // TEMPORARY diagnostic (see lib/auth/diagnostics.ts).
-    logAuthFailure("signUp:exception", thrown, [parsed.data.email, parsed.data.password, parsed.data.fullName]);
+  } catch {
     return { status: "error", message: "We could not create your account. Please try again.", values };
   }
 
   if (error) {
-    // TEMPORARY diagnostic (see lib/auth/diagnostics.ts).
-    logAuthFailure("signUp:supabase-error", error, [parsed.data.email, parsed.data.password, parsed.data.fullName]);
     const message =
       error.code === "weak_password"
         ? "That password is too weak. Try a longer one."

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ArrowRight, CalendarDays, QrCode, Sparkles } from "lucide-react";
 import { Container } from "@/components/ui/container";
 
@@ -38,13 +39,13 @@ export function HeroSection() {
         </p>
 
         <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <a
-            href="#featured-events"
+          <Link
+            href="/events"
             className="inline-flex items-center gap-2 rounded-full bg-violet-600 px-6 py-3 font-semibold text-white shadow-lg shadow-violet-900/50 transition hover:bg-violet-500"
           >
             Explore events
             <ArrowRight aria-hidden="true" className="size-4" />
-          </a>
+          </Link>
           <a
             href="#how-it-works"
             className="rounded-full border border-white/15 px-6 py-3 font-semibold text-slate-200 transition hover:border-white/30 hover:bg-white/5"

@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Clock, ShieldCheck, Sparkles, TriangleAlert } from "lucide-react";
+import { ChangePasswordForm } from "@/components/dashboard/change-password-form";
 import { DashboardCard } from "@/components/dashboard/dashboard-card";
 import { OrganizerRequestForm } from "@/components/dashboard/organizer-request-form";
 import { ProfileForm } from "@/components/dashboard/profile-form";
@@ -50,36 +51,80 @@ async function DashboardContent() {
         <RoleBadge role={profile.role} />
       </div>
 
+      <AttendeeSummary userId={user.id} />
+
       <div className="grid gap-6 lg:grid-cols-2">
         <DashboardCard title="Your profile" description={`Signed in as ${user.email}`}>
           <ProfileForm fullName={profile.full_name} />
         </DashboardCard>
 
+        <DashboardCard title="Change password">
+          <ChangePasswordForm />
+        </DashboardCard>
+
         {profile.role === "attendee" ? <OrganizerAccessCard /> : null}
 
         {profile.role === "organizer" ? (
-          <DashboardCard title="Organizer tools" description="Your account can host events.">
-            <p className="flex items-center gap-2 text-sm text-slate-300">
-              <Sparkles aria-hidden="true" className="size-4 text-violet-300" />
-              Creating and managing events arrives in the next phase.
-            </p>
+          <DashboardCard title="Organizer tools" description="Create events, track sales and check in attendees.">
+            <div className="flex flex-wrap gap-2">
+              <Link href="/organizer/events" className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white hover:bg-violet-500">
+                <Sparkles aria-hidden="true" className="size-4" />
+                My events & sales
+                <ArrowRight aria-hidden="true" className="size-4" />
+              </Link>
+              <Link href="/organizer/check-in" className="rounded-xl border border-white/15 px-5 py-3 text-sm font-semibold text-slate-200 hover:bg-white/5">
+                Check-in
+              </Link>
+            </div>
           </DashboardCard>
         ) : null}
 
         {profile.role === "admin" ? (
-          <DashboardCard title="Admin" description="Review requests from attendees who want to host events.">
+          <DashboardCard title="Admin" description="Approve events, review organizer requests and manage users.">
             <Link
-              href="/admin/organizer-requests"
+              href="/admin"
               className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white hover:bg-violet-500"
             >
               <ShieldCheck aria-hidden="true" className="size-4" />
-              Review organizer requests
+              Admin overview
               <ArrowRight aria-hidden="true" className="size-4" />
             </Link>
           </DashboardCard>
         ) : null}
       </div>
     </div>
+  );
+}
+
+/** Attendee summary: upcoming tickets, bookings and unread notifications. */
+async function AttendeeSummary({ userId }: { userId: string }) {
+  const supabase = await createClient();
+  const nowIso = new Date().toISOString();
+  const [bookings, upcoming, unread] = await Promise.all([
+    supabase.from("bookings").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("status", "confirmed"),
+    supabase
+      .from("tickets")
+      .select("id, events!inner(starts_at)", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("status", "valid")
+      .gte("events.starts_at", nowIso),
+    supabase.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", userId).is("read_at", null),
+  ]);
+
+  const cards: [string, number | null, string][] = [
+    ["Confirmed bookings", bookings.count, "/bookings"],
+    ["Upcoming tickets", upcoming.count, "/tickets"],
+    ["Unread notifications", unread.count, "/notifications"],
+  ];
+  return (
+    <dl className="grid gap-4 sm:grid-cols-3">
+      {cards.map(([label, value, href]) => (
+        <Link key={label} href={href} className="rounded-2xl border border-white/10 bg-navy-900/70 p-5 hover:border-violet-500/50">
+          <dt className="text-sm text-slate-400">{label}</dt>
+          <dd className="mt-1 text-2xl font-bold text-white">{value ?? "—"}</dd>
+        </Link>
+      ))}
+    </dl>
   );
 }
 
