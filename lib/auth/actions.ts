@@ -9,6 +9,7 @@ import { redirect } from "next/navigation";
 import { type FormState, getText, safeRedirectPath } from "@/lib/forms";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
+import { logAuthFailure } from "./diagnostics";
 import {
   forgotPasswordSchema,
   resetPasswordSchema,
@@ -45,19 +46,29 @@ export async function signUpAction(_prev: FormState, formData: FormData): Promis
   }
 
   if (!isSupabaseConfigured()) return { ...NOT_CONFIGURED, values };
-  const supabase = await createClient();
-  const { error } = await supabase.auth.signUp({
-    email: parsed.data.email,
-    password: parsed.data.password,
-    options: {
-      // Stored as user metadata. The database trigger copies the name into
-      // profiles, and always sets the role to "attendee".
-      data: { full_name: parsed.data.fullName },
-      emailRedirectTo: `${await getSiteUrl()}/auth/confirm?next=/dashboard`,
-    },
-  });
+
+  let error;
+  try {
+    const supabase = await createClient();
+    ({ error } = await supabase.auth.signUp({
+      email: parsed.data.email,
+      password: parsed.data.password,
+      options: {
+        // Stored as user metadata. The database trigger copies the name into
+        // profiles, and always sets the role to "attendee".
+        data: { full_name: parsed.data.fullName },
+        emailRedirectTo: `${await getSiteUrl()}/auth/confirm?next=/dashboard`,
+      },
+    }));
+  } catch (thrown) {
+    // TEMPORARY diagnostic (see lib/auth/diagnostics.ts).
+    logAuthFailure("signUp:exception", thrown, [parsed.data.email, parsed.data.password, parsed.data.fullName]);
+    return { status: "error", message: "We could not create your account. Please try again.", values };
+  }
 
   if (error) {
+    // TEMPORARY diagnostic (see lib/auth/diagnostics.ts).
+    logAuthFailure("signUp:supabase-error", error, [parsed.data.email, parsed.data.password, parsed.data.fullName]);
     const message =
       error.code === "weak_password"
         ? "That password is too weak. Try a longer one."
